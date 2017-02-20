@@ -26,9 +26,11 @@ static string stsAddress = $"http://{Environment.MachineName}:8000/STS";
 void Main()
 {
 	var url = serviceAddress;
-	var binding = new BasicHttpBinding();
-	using (var host = new ServiceHost(typeof(MyService), new Uri(url)))
+	var binding = new WSFederationHttpBinding(WSFederationHttpSecurityMode.Message);
+	using (var host = new ServiceHost(typeof(MyService)))
 	{
+		host.Credentials.ServiceCertificate.Certificate = GetCertificate();
+		host.AddServiceEndpoint(typeof(ICrossGatewayQueryITI38), binding, serviceAddress);
 		IncludeExceptionDetails(host);
 		host.Open();
 		Console.WriteLine($"Running on {url}");
@@ -59,4 +61,11 @@ public interface ICrossGatewayQueryITI38
 {
 	[OperationContract(Action = "urn:ihe:iti:2007:CrossGatewayQuery", ReplyAction = "urn:ihe:iti:2007:CrossGatewayQueryResponse")]
 	Message CrossGatewayQuery(Message request);
+}
+
+static X509Certificate2 GetCertificate()
+{
+	var filename = Path.Combine(Path.GetDirectoryName(LINQPad.Util.CurrentQueryPath), "LocalSTS.pfx");
+	var password = "LocalSTS";
+	return new X509Certificate2(filename, password, X509KeyStorageFlags.PersistKeySet);
 }

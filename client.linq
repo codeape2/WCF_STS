@@ -24,6 +24,7 @@
   <Namespace>System.ServiceModel</Namespace>
   <Namespace>System.ServiceModel.Security</Namespace>
   <Namespace>System.ServiceModel.Channels</Namespace>
+  <Namespace>System.Net</Namespace>
 </Query>
 
 static string stsAddress = $"http://{Environment.MachineName}:8000/STS";
@@ -34,8 +35,12 @@ void Main()
 	var token = GetToken();
 	Console.WriteLine("Got token");
 	
-	var binding = new BasicHttpBinding();
-	var factory = new ChannelFactory<ICrossGatewayQueryITI38>(binding, serviceAddress);
+	var binding = new WSFederationHttpBinding(WSFederationHttpSecurityMode.Message);	
+	var factory = new ChannelFactory<ICrossGatewayQueryITI38>(binding, new EndpointAddress(new Uri(serviceAddress), new DnsEndpointIdentity("LocalSTS")));
+	
+	factory.Credentials.SupportInteractive = false;
+	factory.Credentials.ServiceCertificate.Authentication.CertificateValidationMode = X509CertificateValidationMode.None;	
+	
 	var proxy = factory.CreateChannelWithIssuedToken(token);
 	var response = proxy.CrossGatewayQuery( Message.CreateMessage(MessageVersion.Soap11, "urn:ihe:iti:2007:CrossGatewayQuery", "Hello world"));
 	response.GetBody<string>().Dump();

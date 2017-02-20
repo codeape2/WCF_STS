@@ -56,9 +56,15 @@ public interface ISecurityTokenService
 
 static SigningCredentials CreateSigningCredentials()
 {
+	return new X509SigningCredentials(GetCertificate());
+}
+
+
+static X509Certificate2 GetCertificate()
+{
 	var filename = Path.Combine(Path.GetDirectoryName(LINQPad.Util.CurrentQueryPath), "LocalSTS.pfx");
 	var password = "LocalSTS";
-	return new X509SigningCredentials(new X509Certificate2(filename, password, X509KeyStorageFlags.PersistKeySet));
+	return new X509Certificate2(filename, password, X509KeyStorageFlags.PersistKeySet);
 }
 
 public class SecurityTokenWCFService : ISecurityTokenService
