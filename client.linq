@@ -35,14 +35,15 @@ void Main()
 	var token = GetToken();
 	Console.WriteLine("Got token");
 	
-	var binding = new WSFederationHttpBinding(WSFederationHttpSecurityMode.Message);	
+	var binding = new WSFederationHttpBinding(WSFederationHttpSecurityMode.Message);
+	binding.Security.Message.EstablishSecurityContext = false;
 	var factory = new ChannelFactory<ICrossGatewayQueryITI38>(binding, new EndpointAddress(new Uri(serviceAddress), new DnsEndpointIdentity("LocalSTS")));
 	
 	factory.Credentials.SupportInteractive = false;
 	factory.Credentials.ServiceCertificate.Authentication.CertificateValidationMode = X509CertificateValidationMode.None;	
 	
 	var proxy = factory.CreateChannelWithIssuedToken(token);
-	var response = proxy.CrossGatewayQuery( Message.CreateMessage(MessageVersion.Soap11, "urn:ihe:iti:2007:CrossGatewayQuery", "Hello world"));
+	var response = proxy.CrossGatewayQuery(Message.CreateMessage(MessageVersion.Soap12WSAddressing10, "urn:ihe:iti:2007:CrossGatewayQuery", "Hello world"));
 	response.GetBody<string>().Dump();
 }
 

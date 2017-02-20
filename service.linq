@@ -27,6 +27,7 @@ void Main()
 {
 	var url = serviceAddress;
 	var binding = new WSFederationHttpBinding(WSFederationHttpSecurityMode.Message);
+	binding.Security.Message.EstablishSecurityContext = false;
 	using (var host = new ServiceHost(typeof(MyService)))
 	{
 		host.Credentials.ServiceCertificate.Certificate = GetCertificate();
@@ -52,7 +53,7 @@ public class MyService : ICrossGatewayQueryITI38
 {
 	public Message CrossGatewayQuery(Message request)
 	{
-		return Message.CreateMessage(MessageVersion.Soap11, "urn:ihe:iti:2007:CrossGatewayQueryResponse", "Hello world!");
+		return Message.CreateMessage(MessageVersion.Soap12WSAddressing10, "urn:ihe:iti:2007:CrossGatewayQueryResponse", "Hello world!");
 	}
 }
 
