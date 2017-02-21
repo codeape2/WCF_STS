@@ -56,15 +56,45 @@ public interface ISecurityTokenService
 
 static SigningCredentials CreateSigningCredentials()
 {
+	
 	return new X509SigningCredentials(GetCertificate());
 }
 
 
 static X509Certificate2 GetCertificate()
 {
+	/*
 	var filename = Path.Combine(Path.GetDirectoryName(LINQPad.Util.CurrentQueryPath), "LocalSTS.pfx");
 	var password = "LocalSTS";
 	return new X509Certificate2(filename, password, X509KeyStorageFlags.PersistKeySet);
+	*/
+	X509Store certStore = new X509Store(StoreName.My, StoreLocation.LocalMachine);
+	certStore.Open(OpenFlags.ReadOnly);
+
+	try
+	{
+
+		X509Certificate2Collection certCollection = certStore.Certificates.Find(
+								   X509FindType.FindBySubjectDistinguishedName,
+									 // Replace below with your cert's thumbprint
+									 "CN=WCFHOLSTS",
+								   false);
+		// Get the first cert with the thumbprint
+		if (certCollection.Count > 0)
+		{
+			return certCollection[0];
+			// Use certificate
+		}
+		else
+		{
+			throw new ArgumentException("Certificate not found");
+		}
+	}
+	finally
+	{
+
+		certStore.Close();
+	}
 }
 
 public class SecurityTokenWCFService : ISecurityTokenService
@@ -105,7 +135,7 @@ public class STS : SecurityTokenService
 			new Claim(ClaimTypes.NameIdentifier, "12345678901")
 		});
 	}
-
+		
 	protected override Scope GetScope(ClaimsPrincipal principal, RequestSecurityToken request)
 	{		
 		Console.WriteLine("GetScope");
