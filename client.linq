@@ -25,6 +25,8 @@
   <Namespace>System.ServiceModel.Security</Namespace>
   <Namespace>System.ServiceModel.Channels</Namespace>
   <Namespace>System.Net</Namespace>
+  <Namespace>System.Security.Cryptography.X509Certificates</Namespace>
+  <Namespace>System.Net.Security</Namespace>
 </Query>
 
 static string stsAddress = $"http://{Environment.MachineName}:8000/STS";
@@ -37,10 +39,12 @@ void Main()
 	
 	var binding = new WSFederationHttpBinding(WSFederationHttpSecurityMode.Message);
 	binding.Security.Message.EstablishSecurityContext = false;
+	binding.Security.Message.NegotiateServiceCredential = false;
 	var factory = new ChannelFactory<ICrossGatewayQueryITI38>(binding, new EndpointAddress(new Uri(serviceAddress), new DnsEndpointIdentity("LocalSTS")));
 	
 	factory.Credentials.SupportInteractive = false;
-	factory.Credentials.ServiceCertificate.Authentication.CertificateValidationMode = X509CertificateValidationMode.None;	
+	factory.Credentials.ServiceCertificate.Authentication.CertificateValidationMode = X509CertificateValidationMode.None;
+	factory.Credentials.ServiceCertificate.DefaultCertificate = GetCertificate();
 	
 	var proxy = factory.CreateChannelWithIssuedToken(token);
 	var response = proxy.CrossGatewayQuery(Message.CreateMessage(MessageVersion.Soap12WSAddressing10, "urn:ihe:iti:2007:CrossGatewayQuery", "Hello world"));
@@ -62,10 +66,17 @@ SecurityToken GetToken()
 	return factory.CreateChannel().Issue(rst);
 }
 
-[ServiceContract(Namespace = "urn:ihe:iti:xds-b:2007")]
+[ServiceContract(ProtectionLevel = ProtectionLevel.Sign, Namespace = "urn:ihe:iti:xds-b:2007")]
 public interface ICrossGatewayQueryITI38
 {
 	[OperationContract(Action = "urn:ihe:iti:2007:CrossGatewayQuery", ReplyAction = "urn:ihe:iti:2007:CrossGatewayQueryResponse")]
 	Message CrossGatewayQuery(Message request);
+}
+
+static X509Certificate2 GetCertificate()
+{
+	var filename = Path.Combine(Path.GetDirectoryName(LINQPad.Util.CurrentQueryPath), "LocalSTS.pfx");
+	var password = "LocalSTS";
+	return new X509Certificate2(filename, password, X509KeyStorageFlags.PersistKeySet);
 }
 // Define other methods and classes here
