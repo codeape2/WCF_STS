@@ -43,6 +43,7 @@ void Main()
 	var factory = new ChannelFactory<ICrossGatewayQueryITI38>(binding, new EndpointAddress(new Uri(serviceAddress), new DnsEndpointIdentity("LocalSTS")));
 	
 	factory.Credentials.SupportInteractive = false;
+	factory.Credentials.UseIdentityConfiguration = true;
 	factory.Credentials.ServiceCertificate.Authentication.CertificateValidationMode = X509CertificateValidationMode.None;
 	factory.Credentials.ServiceCertificate.DefaultCertificate = GetCertificate();
 

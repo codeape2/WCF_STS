@@ -74,7 +74,12 @@ public class SecurityTokenWCFService : ISecurityTokenService
 		var sContext = new WSTrustSerializationContext();
 		var rst = new WSTrustFeb2005RequestSerializer().ReadXml(message.GetReaderAtBodyContents(), sContext);
 
-		var sts = new STS(new SecurityTokenServiceConfiguration("Custom token issuer", CreateSigningCredentials()));
+		var sts = new STS(
+			new SecurityTokenServiceConfiguration("Custom token issuer", CreateSigningCredentials())
+			{
+				DefaultTokenType = "http://docs.oasis-open.org/wss/oasis-wss-saml-token-profile-1.1#SAMLV2.0"
+			}
+		);
 		var rstr = sts.Issue(null, rst);
 
 		var ms = new MemoryStream();
