@@ -18,7 +18,7 @@
 
 void Main()
 {
-	var stsAddress = $"http://{Environment.MachineName}:8000/STS";
+	var stsAddress = $"http://{Environment.MachineName}:8001/STS";
 	
 	var url = stsAddress;
 	var binding = new BasicHttpBinding();

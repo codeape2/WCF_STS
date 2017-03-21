@@ -29,15 +29,15 @@
   <Namespace>System.Net.Security</Namespace>
 </Query>
 
-static string stsAddress = $"http://{Environment.MachineName}:8000/STS";
-static string serviceAddress = $"http://{Environment.MachineName}:8000/Service";
+static string stsAddress = $"http://{Environment.MachineName}:8001/STS";
+static string serviceAddress = $"https://{Environment.MachineName}:8000/Service";
 
 void Main()
 {
 	var token = GetToken();
 	Console.WriteLine("Got token");
 	
-	var binding = new WSFederationHttpBinding(WSFederationHttpSecurityMode.Message);
+	var binding = new WSFederationHttpBinding(WSFederationHttpSecurityMode.TransportWithMessageCredential);
 	binding.Security.Message.EstablishSecurityContext = false;
 	binding.Security.Message.NegotiateServiceCredential = false;
 	var factory = new ChannelFactory<ICrossGatewayQueryITI38>(binding, new EndpointAddress(new Uri(serviceAddress), new DnsEndpointIdentity("LocalSTS")));
@@ -45,10 +45,23 @@ void Main()
 	factory.Credentials.SupportInteractive = false;
 	factory.Credentials.ServiceCertificate.Authentication.CertificateValidationMode = X509CertificateValidationMode.None;
 	factory.Credentials.ServiceCertificate.DefaultCertificate = GetCertificate();
-	
+
 	var proxy = factory.CreateChannelWithIssuedToken(token);
+	
+	// Uncomment to disable server ssl certificate check
+	// DisableSSLCertificateCheck();
+	
 	var response = proxy.CrossGatewayQuery(Message.CreateMessage(MessageVersion.Soap12WSAddressing10, "urn:ihe:iti:2007:CrossGatewayQuery", "Hello world"));
 	response.GetBody<string>().Dump();
+}
+
+void DisableSSLCertificateCheck()
+{
+	System.Net.ServicePointManager.ServerCertificateValidationCallback +=
+	(se, cert, chain, sslerror) =>
+		{
+			return true;
+		};
 }
 
 SecurityToken GetToken()
@@ -66,7 +79,7 @@ SecurityToken GetToken()
 	return factory.CreateChannel().Issue(rst);
 }
 
-[ServiceContract(ProtectionLevel = ProtectionLevel.Sign, Namespace = "urn:ihe:iti:xds-b:2007")]
+[ServiceContract(ProtectionLevel = ProtectionLevel.EncryptAndSign, Namespace = "urn:ihe:iti:xds-b:2007")]
 public interface ICrossGatewayQueryITI38
 {
 	[OperationContract(Action = "urn:ihe:iti:2007:CrossGatewayQuery", ReplyAction = "urn:ihe:iti:2007:CrossGatewayQueryResponse")]

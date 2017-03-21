@@ -50,13 +50,13 @@
 // Service
 //
 
-static string serviceAddress = $"http://{Environment.MachineName}:8000/Service";
-static string stsAddress = $"http://{Environment.MachineName}:8000/STS";
+static string serviceAddress = $"https://{Environment.MachineName}:8000/Service";
+static string stsAddress = $"http://{Environment.MachineName}:8001/STS";
 
 void Main()
 {
 	var url = serviceAddress;
-	var binding = new WSFederationHttpBinding(WSFederationHttpSecurityMode.Message);
+	var binding = new WSFederationHttpBinding(WSFederationHttpSecurityMode.TransportWithMessageCredential);
 	binding.Security.Message.EstablishSecurityContext = false;
 	binding.Security.Message.NegotiateServiceCredential = false;
 	using (var host = new ServiceHost(typeof(MyService)))
@@ -98,11 +98,13 @@ public class MyService : ICrossGatewayQueryITI38
 {
 	public Message CrossGatewayQuery(Message request)
 	{
+		"Responding".Dump();
+		OperationContext.Current.ClaimsPrincipal.Dump("ClaimsPrincipal");
 		return Message.CreateMessage(MessageVersion.Soap12WSAddressing10, "urn:ihe:iti:2007:CrossGatewayQueryResponse", "Hello world!");
 	}
 }
 
-[ServiceContract(ProtectionLevel = ProtectionLevel.Sign, Namespace = "urn:ihe:iti:xds-b:2007")]
+[ServiceContract(ProtectionLevel = ProtectionLevel.EncryptAndSign, Namespace = "urn:ihe:iti:xds-b:2007")]
 public interface ICrossGatewayQueryITI38
 {
 	[OperationContract(Action = "urn:ihe:iti:2007:CrossGatewayQuery", ReplyAction = "urn:ihe:iti:2007:CrossGatewayQueryResponse")]
